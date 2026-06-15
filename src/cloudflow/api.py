@@ -24,7 +24,7 @@ def sample(
     Parameters
     ----------
     model
-        Module returned by :func:`cloudflow.load_checkpoint`.
+        Module returned by :func:`cloudflow.load_model`.
     conditioning
         Built via :class:`Conditioning.from_modis_hdf`,
         :class:`Conditioning.from_xarray`, or :class:`Conditioning.from_tensor`.

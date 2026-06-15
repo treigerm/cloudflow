@@ -5,23 +5,22 @@ Reproduces the paper inference pipeline.
 Usage
 -----
     uv run python examples/quickstart.py \\
-        --ckpt checkpoints/flow.mdlus \\
+        --ckpt checkpoints/cloudflow \\
         --hdf data/MYD021KM.A2023157.0820.061.hdf \\
         --out samples.nc
 """
 
 import argparse
 
-from cloudflow import Conditioning, load_checkpoint, load_data_info, sample
+from cloudflow import Conditioning, load_model, sample
 from cloudflow.io import save_samples_netcdf
 from cloudflow.normalization import load_era5_stats, load_modis_stats
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--ckpt", required=True)
+    p.add_argument("--ckpt", required=True, help="Checkpoint directory.")
     p.add_argument("--hdf", required=True)
-    p.add_argument("--data-info", default="checkpoints/data_info.yaml")
     p.add_argument("--out", default="samples.nc")
     p.add_argument("--x-min", type=int, default=500)
     p.add_argument("--y-min", type=int, default=800)
@@ -30,15 +29,13 @@ def main():
     p.add_argument("--device", default="cuda")
     args = p.parse_args()
 
-    info = load_data_info(args.data_info)
+    model, info = load_model(args.ckpt, device=args.device)
     bounds = (
         args.x_min,
         args.x_min + info.crop_size,
         args.y_min,
         args.y_min + info.crop_size,
     )
-
-    model = load_checkpoint(args.ckpt, device=args.device)
 
     cond = Conditioning.from_modis_hdf(
         hdf_path=args.hdf,

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import typer
 
-from . import Conditioning, load_checkpoint, load_data_info, sample
+from . import Conditioning, load_model, sample
 from .io import save_samples_netcdf
 from .normalization import load_era5_stats, load_modis_stats
 
@@ -25,8 +25,9 @@ def _parse_bounds(s: str):
 
 @app.command("sample")
 def sample_cmd(
-    ckpt: Path = typer.Option(..., help="Path to a .mdlus checkpoint or a checkpoint directory."),
-    data_info: Path = typer.Option(..., help="Path to the checkpoint's data_info.yaml."),
+    ckpt: Path = typer.Option(
+        ..., help="Checkpoint directory containing the .mdlus weights and data_info.yaml."
+    ),
     modis_hdf: Path = typer.Option(..., help="MODIS L1B HDF granule."),
     bounds: str = typer.Option(..., help="Spatial crop as 'x_min,x_max,y_min,y_max'."),
     out: Path = typer.Option(..., help="Output NetCDF path."),
@@ -38,11 +39,8 @@ def sample_cmd(
     """Generate flow-matching samples from a MODIS HDF + ERA5 conditioning."""
     bounds_t = _parse_bounds(bounds)
 
-    typer.echo(f"Loading data_info {data_info}")
-    info = load_data_info(data_info)
-
-    typer.echo(f"Loading checkpoint {ckpt}")
-    model = load_checkpoint(ckpt, device=device)
+    typer.echo(f"Loading model from {ckpt}")
+    model, info = load_model(ckpt, device=device)
 
     typer.echo(f"Building conditioning from {modis_hdf}")
     cond = Conditioning.from_modis_hdf(

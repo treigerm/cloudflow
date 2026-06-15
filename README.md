@@ -19,10 +19,9 @@ uv sync
 ## Quickstart
 
 ```python
-from cloudflow import Conditioning, load_checkpoint, load_data_info, sample
+from cloudflow import Conditioning, load_model, sample
 
-info = load_data_info("checkpoints/data_info.yaml")
-model = load_checkpoint("checkpoints/flow.mdlus", device="cuda")
+model, info = load_model("checkpoints/cloudflow", device="cuda")
 
 c = info.crop_size  # e.g. 256
 cond = Conditioning.from_modis_hdf(
@@ -39,8 +38,7 @@ Or, via the CLI:
 
 ```bash
 uv run cloudflow sample \
-    --ckpt checkpoints/flow.mdlus \
-    --data-info checkpoints/data_info.yaml \
+    --ckpt checkpoints/cloudflow \
     --modis-hdf data/MYD021KM.A2023157.0820.061.hdf \
     --bounds 500,756,800,1056 \
     --out samples.nc

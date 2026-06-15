@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from ..data_info import DataInfo, load_data_info
+from ..checkpoint import DataInfo, load_data_info
 
 
 @dataclass
