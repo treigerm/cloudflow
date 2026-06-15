@@ -25,8 +25,12 @@ def _parse_bounds(s: str):
 
 @app.command("sample")
 def sample_cmd(
-    ckpt: Path = typer.Option(
-        ..., help="Checkpoint directory containing the .mdlus weights and data_info.yaml."
+    ckpt: str = typer.Option(
+        ...,
+        help=(
+            "Checkpoint directory containing the .mdlus weights and data_info.yaml, "
+            "or a Hugging Face repo like 'hf://<owner>/<name>'."
+        ),
     ),
     modis_hdf: Path = typer.Option(..., help="MODIS L1B HDF granule."),
     bounds: str = typer.Option(..., help="Spatial crop as 'x_min,x_max,y_min,y_max'."),
@@ -39,7 +43,7 @@ def sample_cmd(
     """Generate flow-matching samples from a MODIS HDF + ERA5 conditioning."""
     bounds_t = _parse_bounds(bounds)
 
-    typer.echo(f"Loading model from {ckpt}")
+    typer.echo(f"Loading model from {ckpt} to {device}")
     model, info = load_model(ckpt, device=device)
 
     typer.echo(f"Building conditioning from {modis_hdf}")
@@ -59,6 +63,7 @@ def sample_cmd(
     )
 
     typer.echo(f"Writing {out}")
+    out.parent.mkdir(parents=True, exist_ok=True)
     modis_stats_l1 = load_modis_stats(info.output_bands)
     modis_stats_full = load_modis_stats(info.output_bands, info.modis_l2_channels or None)
     era5_stats_d = load_era5_stats(info.era5_variables, info.era5_levels)
