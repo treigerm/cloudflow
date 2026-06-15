@@ -18,7 +18,10 @@ from pathlib import Path
 
 import torch
 import yaml
+from huggingface_hub import snapshot_download
 from physicsnemo import Module
+
+from .model import FlowAttCompressUNet
 
 
 @dataclass(frozen=True)
@@ -61,24 +64,57 @@ def load_data_info(path: str | Path) -> DataInfo:
     )
 
 
-def load_model(path: str | Path, device: str | torch.device = "cpu") -> tuple[Module, DataInfo]:
-    """Load a cloudflow checkpoint and its metadata from a checkpoint directory.
+HF_PREFIX = "hf://"
 
-    ``path`` is a checkpoint directory containing both the model weights
-    (``UNet.0.{index}.mdlus`` files — the latest is used) and a
-    ``data_info.yaml`` sidecar describing the training-time data setup. A
-    ``.mdlus`` file may also be passed directly, in which case the
-    ``data_info.yaml`` next to it is used.
+
+def load_model(path: str | Path, device: str | torch.device = "cpu") -> tuple[Module, DataInfo]:
+    """Load a cloudflow checkpoint and its metadata.
+
+    ``path`` may be either:
+
+    * A local checkpoint directory containing both the model weights
+      (``UNet.0.{index}.mdlus`` files — the latest is used) and a
+      ``data_info.yaml`` sidecar describing the training-time data setup. A
+      ``.mdlus`` file may also be passed directly, in which case the
+      ``data_info.yaml`` next to it is used.
+    * A Hugging Face Hub repo of the form ``"hf://<owner>/<name>"`` (optionally
+      pinned to a revision with ``"hf://<owner>/<name>@<revision>"``). The repo
+      is downloaded to the local Hugging Face cache and loaded from there.
 
     Returns ``(model, info)``::
 
         model, info = load_model("checkpoints/cloudflow")
+        model, info = load_model("hf://treigerm/cloudflow")
     """
+    if isinstance(path, str) and path.startswith(HF_PREFIX):
+        path = _download_from_hf(path)
+
     path = Path(path)
     ckpt_dir = path if path.is_dir() else path.parent
     info = load_data_info(ckpt_dir / "data_info.yaml")
     model = load_checkpoint(path, device=device)
     return model, info
+
+
+def _download_from_hf(uri: str) -> Path:
+    """Download a checkpoint repo from the Hub and return its local directory.
+
+    ``uri`` looks like ``"hf://owner/name"`` or ``"hf://owner/name@revision"``.
+    """
+    repo_id = uri[len(HF_PREFIX) :]
+    revision = None
+    if "@" in repo_id:
+        repo_id, revision = repo_id.split("@", 1)
+    if repo_id.count("/") != 1 or not all(repo_id.split("/")):
+        raise ValueError(f"Invalid Hugging Face repo in {uri!r}; expected 'hf://<owner>/<name>'.")
+
+    local_dir = snapshot_download(
+        repo_id,
+        revision=revision,
+        repo_type="model",
+        allow_patterns=["*.mdlus", "data_info.yaml"],
+    )
+    return Path(local_dir)
 
 
 def load_checkpoint(path: str | Path, device: str | torch.device = "cpu"):
@@ -90,7 +126,12 @@ def load_checkpoint(path: str | Path, device: str | torch.device = "cpu"):
     path = Path(path)
     if path.is_dir():
         path = _find_latest_checkpoint(path)
-    net = Module.from_checkpoint(str(path))
+    # Load via the concrete class rather than the base ``Module``: the
+    # checkpoint records its class as ``models.unet_preprocess`` (the original
+    # corrdiff module path, which does not exist here). physicsnemo skips that
+    # import when ``from_checkpoint`` is called on a class whose name already
+    # matches the serialised one.
+    net = FlowAttCompressUNet.from_checkpoint(str(path))
     net.eval().requires_grad_(False).to(device)
     return net
 

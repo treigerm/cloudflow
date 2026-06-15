@@ -21,7 +21,9 @@ uv sync
 ```python
 from cloudflow import Conditioning, load_model, sample
 
-model, info = load_model("checkpoints/cloudflow", device="cuda")
+model, info = load_model("hf://treigerm/cloudflow", device="cuda")
+# Or load from a local directory:
+# model, info = load_model("checkpoints/cloudflow", device="cuda")
 
 c = info.crop_size  # e.g. 256
 cond = Conditioning.from_modis_hdf(

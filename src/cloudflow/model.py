@@ -314,3 +314,21 @@ class FlowAttCompressUNet(UNet):
         out_channels = z_compact.shape[1]
         expand_idx = compact_inverse.unsqueeze(1).expand(B, out_channels, H * W)
         return torch.gather(z_compact, 2, expand_idx).reshape(B, out_channels, H, W)
+
+
+def _register() -> None:
+    """Register ``FlowAttCompressUNet`` with physicsnemo's model registry.
+
+    Checkpoints serialise the class under its original corrdiff module path
+    (``models.unet_preprocess``), which does not exist here. Registering the
+    class by name lets ``Module.from_checkpoint`` resolve it from the registry
+    instead of importing that missing module.
+    """
+    from physicsnemo.registry import ModelRegistry
+
+    registry = ModelRegistry()
+    if "FlowAttCompressUNet" not in registry.list_models():
+        registry.register(FlowAttCompressUNet, name="FlowAttCompressUNet")
+
+
+_register()

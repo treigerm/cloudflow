@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "torch>=2.4",
-    "nvidia-physicsnemo>=1.2.0",
+    # Pinned to <2: physicsnemo 2.x rejects the checkpoint's mdlus file format
+    # (0.2.0) with a strict version check. 1.2.0 is the version used to train
+    # and serialise the cloudflow checkpoints (see ~/dev/corrdiff).
+    "nvidia-physicsnemo==1.2.0",
     "numpy>=1.26",
     "xarray>=2024.1",
     "netcdf4>=1.7",
@@ -20,6 +23,8 @@ dependencies = [
     "shapely>=2.0",
     "gcsfs>=2024.6",
     "dask>=2024.6",
+    "huggingface-hub>=0.24",
+    "einops>=0.8",
 ]
 
 [project.scripts]
