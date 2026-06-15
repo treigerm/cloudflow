@@ -1,0 +1,71 @@
+[project]
+name = "cloudflow"
+version = "0.1.0"
+description = "Flow-matching generation of MODIS-like cloud radiances conditioned on ERA5."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "torch>=2.4",
+    # Pinned to <2: physicsnemo 2.x rejects the checkpoint's mdlus file format
+    # (0.2.0) with a strict version check. 1.2.0 is the version used to train
+    # and serialise the cloudflow checkpoints.
+    "nvidia-physicsnemo==1.2.0",
+    "numpy>=1.26",
+    "xarray>=2024.1",
+    "netcdf4>=1.7",
+    "scipy>=1.13",
+    "nvtx>=0.2",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "satpy[modis-l1b]>=0.49",
+    "cartopy>=0.23",
+    "shapely>=2.0",
+    "gcsfs>=2024.6",
+    "dask>=2024.6",
+    "huggingface-hub>=0.24",
+    "einops>=0.8",
+]
+
+[project.scripts]
+cloudflow = "cloudflow.cli:app"
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.8",
+    "notebook>=7.0",
+    "pre-commit>=3.7",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "W",   # pycodestyle warnings
+]
+ignore = [
+    "E501",  # line length is handled by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer uses function calls in argument defaults idiomatically.
+"src/cloudflow/cli.py" = ["B008"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cloudflow"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/cloudflow/stats/modis_band_stats.json" = "cloudflow/stats/modis_band_stats.json"
+"src/cloudflow/stats/era5_stats.json" = "cloudflow/stats/era5_stats.json"
