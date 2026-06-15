@@ -1,9 +1,4 @@
-"""Flow-matching UNet with compact ERA5 attention.
-
-Ported from corrdiff/models/unet_preprocess.py. Contains only the
-``FlowAttCompressUNet`` variant used by the public release. The other
-variants (RegressionUNet, FlowUNet, UNet1x1Conv) are not used at inference.
-"""
+"""Flow-matching UNet with compact ERA5 attention."""
 
 import math
 
@@ -11,6 +6,7 @@ import torch
 from physicsnemo.models.diffusion import Conv2d, Linear, UNet, weight_init
 from physicsnemo.models.diffusion.song_unet import SongUNet
 from physicsnemo.models.diffusion.unet import MetaData
+from physicsnemo.registry import ModelRegistry
 from torch import nn
 
 
@@ -324,8 +320,6 @@ def _register() -> None:
     class by name lets ``Module.from_checkpoint`` resolve it from the registry
     instead of importing that missing module.
     """
-    from physicsnemo.registry import ModelRegistry
-
     registry = ModelRegistry()
     if "FlowAttCompressUNet" not in registry.list_models():
         registry.register(FlowAttCompressUNet, name="FlowAttCompressUNet")

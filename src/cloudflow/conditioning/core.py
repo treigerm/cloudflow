@@ -9,6 +9,14 @@ import numpy as np
 import torch
 
 from ..checkpoint import DataInfo, load_data_info
+from ..normalization import (
+    load_era5_stats,
+    load_modis_stats,
+    normalize_era5,
+    normalize_modis,
+)
+from .era5 import load_era5_data
+from .modis import load_modis_data
 
 
 @dataclass
@@ -108,15 +116,6 @@ class Conditioning:
         output bands, optional L2 channels, and whether the surface metadata
         includes ``cos(solar_zenith_angle)`` — comes from there.
         """
-        from ..normalization import (
-            load_era5_stats,
-            load_modis_stats,
-            normalize_era5,
-            normalize_modis,
-        )
-        from .era5 import load_era5_data
-        from .modis import load_modis_data
-
         if not isinstance(data_info, DataInfo):
             data_info = load_data_info(data_info)
 

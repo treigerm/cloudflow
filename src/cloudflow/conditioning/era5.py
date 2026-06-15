@@ -1,10 +1,9 @@
-"""ERA5 fetch + colocation onto a MODIS-style grid.
-
-Ported from corrdiff/generate_flow_patched.py:_to_radians, _get_era5_tree,
-_closest_era5_time, load_era5_data.
-"""
+"""ERA5 fetch + colocation onto a MODIS-style grid."""
 
 import numpy as np
+import pandas as pd
+import scipy.spatial
+import xarray as xr
 
 
 def _to_radians(deg):
@@ -12,8 +11,6 @@ def _to_radians(deg):
 
 
 def _get_era5_tree(latitudes: np.ndarray, longitudes: np.ndarray):
-    import scipy.spatial
-
     lon_grid, lat_grid = np.meshgrid(longitudes, latitudes)
     lat_rad = _to_radians(lat_grid.flatten())
     lon_rad = _to_radians(lon_grid.flatten())
@@ -25,8 +22,6 @@ def _get_era5_tree(latitudes: np.ndarray, longitudes: np.ndarray):
 
 
 def _closest_era5_time(timestamp, era5_times):
-    import pandas as pd
-
     timestamp_dt = pd.to_datetime(timestamp)
     timestamp_hourly = timestamp_dt.floor("h")
     era5_times = pd.to_datetime(era5_times)
@@ -56,8 +51,6 @@ def load_era5_data(
         position in the unique ERA5 cell list (i.e. the inverse index used
         for compact attention).
     """
-    import xarray as xr
-
     if zarr_storage_options is None:
         zarr_storage_options = {"token": "anon"}
 

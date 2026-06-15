@@ -1,11 +1,12 @@
-"""MODIS L1B HDF ingest.
+"""MODIS L1B HDF ingest."""
 
-Ported from corrdiff/scripts/create_tile_csv.py and create_modis_tile.py. The
-satpy/cartopy imports are deferred so that users without the ``[modis]``
-extras can still use the tensor and xarray conditioning paths.
-"""
-
+import cartopy.feature as cfeature
 import numpy as np
+import pandas as pd
+import shapely.geometry
+import shapely.vectorized
+import xarray as xr
+from satpy import Scene
 
 MODIS_WAVELENGTHS = {
     "1": 0.645,
@@ -51,10 +52,6 @@ MODIS_WAVELENGTHS = {
 
 def preprocess_fn_radiances(file):
     """Read a MODIS L1B HDF granule via satpy and return an xarray.Dataset."""
-    import pandas as pd
-    import xarray as xr
-    from satpy import Scene
-
     scn = Scene(reader="modis_l1b", filenames=file)
     channels = list(MODIS_WAVELENGTHS.keys())
     scn.load(channels, generate=False, calibration="radiance")
@@ -64,7 +61,7 @@ def preprocess_fn_radiances(file):
     attrs_dict = {x: ds[x].attrs for x in channels}
 
     ds = ds.assign(Rad=xr.concat([ds[x] for x in channels], dim="band"))
-    ds = ds.drop(list(channels))
+    ds = ds.drop_vars(list(channels))
     ds = ds.assign_coords(band=list(channels))
 
     time_stamp = pd.to_datetime(ds.attrs["start_time"])
@@ -85,10 +82,6 @@ def preprocess_fn_radiances(file):
 
 def create_land_mask_cartopy(ds, resolution: str = "110m") -> np.ndarray:
     """Build a 0/1 land mask on the MODIS grid using cartopy Natural Earth."""
-    import cartopy.feature as cfeature
-    import shapely.geometry
-    import shapely.vectorized
-
     lats = ds.latitude.values
     lons = ds.longitude.values
 
@@ -115,7 +108,7 @@ def load_modis_data(
     hdf_path: str,
     bounds: tuple[int, int, int, int],
     output_bands: list[str],
-) -> tuple["xr.Dataset", str]:  # noqa: F821
+) -> tuple[xr.Dataset, str]:
     """Load a MODIS HDF granule, crop, orient, and add a land mask.
 
     Returns

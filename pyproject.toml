@@ -8,7 +8,7 @@ dependencies = [
     "torch>=2.4",
     # Pinned to <2: physicsnemo 2.x rejects the checkpoint's mdlus file format
     # (0.2.0) with a strict version check. 1.2.0 is the version used to train
-    # and serialise the cloudflow checkpoints (see ~/dev/corrdiff).
+    # and serialise the cloudflow checkpoints.
     "nvidia-physicsnemo==1.2.0",
     "numpy>=1.26",
     "xarray>=2024.1",

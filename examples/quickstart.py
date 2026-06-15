@@ -13,6 +13,7 @@ Usage
 import argparse
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from cloudflow import Conditioning, load_model, sample
@@ -96,8 +97,6 @@ def plot_rgb(samples, truth, output_bands, out_path, n_cols=5):
     since :func:`cloudflow.normalization.normalize_modis` rescales each band by
     its min/max bounds, so we just clip and ``imshow``.
     """
-    import matplotlib.pyplot as plt
-
     rgb_bands = ("1", "4", "3")
     if not all(b in output_bands for b in rgb_bands):
         print(f"Skipping RGB plot: output_bands {output_bands} missing one of {rgb_bands}.")
